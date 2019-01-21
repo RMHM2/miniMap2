@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="myPage">
+
+	<resultMap type="map" id="scheduleMap">
+		<result column="sId" property="SID" />
+		<result column="mNo" property="MNO" />
+		<result column="start_Date" property="START_DATE"
+			javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="end_Date" property="END_DATE"
+			javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="sTitle" property="STITLE" />
+		<result column="sContent" property="SCONTENT" />
+		<result column="sColor" property="SCOLOR" />
+		<result column="delflag" property="DELFLAG" />
+	</resultMap>
+	
+	<resultMap type="map" id="boardMap">
+	
+	
+	</resultMap>
+	<resultMap type="map" id="requestMap">
+	<result column="aId" property="AID" />
+	<result column="mNo" property="MNO" />
+	<result column="mName" property="MNAME" />
+	<result column="request_date" property="REQUEST_DATE" />
+	<result column="address" property="ADDRESS" />
+	<result column="aContent" property="ACONTENT" />
+	<result column="aCode" property="ACODE" />
+	<result column="aTake" property="ATAKE" />
+	<result column="grant_date" property="GRANT_DATE" />
+	<result column="delflag" property="DELFLAG" />
+	
+	</resultMap>
+
+	<insert id="insertSchedule" parameterType="Schedule">
+		INSERT INTO SCHEDULE
+		VALUES(SEQ_SID.NEXTVAL,#{mNo},#{start_Date},#{end_Date},#{sTitle},#{sContent},#{sColor},DEFAULT)
+
+	</insert>
+	<!-- <select id="selectSchedule" parameterType="_int" resultMap="scheduleMap"> -->
+	<select id="selectSchedule" parameterType="_int"
+		resultMap="scheduleMap">
+		SELECT * FROM SCHEDULE
+		WHERE MNO=#{mno}
+	</select>
+
+	<select id="selectMyBoard" parameterType="_int"
+		resultType="Board">
+		select B.*,T.BNAME from board B join BOARD_TYPE T ON (B.bcode = T.BCODE) where mno =#{mNo} ORDER BY BDATE
+		DESC,BNO DESC
+	</select>
+	<select id="selectMyComment" parameterType="_int"
+		resultType="Coment">
+		SELECT C.CID,C.BID,C.MNO,CCONTENT,CDATE,CLEVEL,CREF,C.RFLAG,C.DELFLAG,BNAME FROM COMENT C
+JOIN BOARD B ON(C.BID=B.BID)
+JOIN BOARD_TYPE T ON(B.BCODE=T.BCODE)
+ WHERE C.MNO=#{mNo} ORDER BY CDATE
+		DESC,CID DESC
+	</select>
+
+	<select id="selectBoardCount" parameterType="_int"
+		resultType="_int">
+		SELECT COUNT(*) FROM BOARD WHERE MNO=#{mNo}
+	</select>
+	<select id="selectCommentCount" parameterType="_int"
+		resultType="_int">
+		SELECT COUNT(*) FROM COMENT WHERE MNO=#{mNo}
+	</select>
+	<select id="selectRequest" parameterType="_int" resultType="Authority">
+		select * from authority JOIN authority_type USING (ACODE) where mno=#{mNo}
+
+	</select>
+	<update id="updateAuthority" parameterType="Authority">
+		UPDATE AUTHORITY SET REQUEST_DATE = SYSDATE , ADDRESS=#{address},ACONTENT=#{aContent} , ACODE=#{aCode},IMG_FILE=#{img_file} , SITE_URL=#{site_url} WHERE AId=#{aId}
+	</update>
+	
+	<select id="selectOneMyAuthority" parameterType="string" resultType="Authority">
+		select * from authority where AId=#{aId}
+
+	</select>
+	<update id="deleteSchedule" parameterType="_int">
+		UPDATE SCHEDULE SET DELFLAG = 'Y' WHERE SID=#{sId}
+	</update>
+
+	<update id="updateSchedule" parameterType="Schedule" >
+		UPDATE SCHEDULE SET START_DATE=#{start_Date}, END_DATE=#{end_Date}, STITLE=#{sTitle}, SCONTENT=#{sContent}, SCOLOR=#{sColor} WHERE SID=${sId}
+	</update>
+	
+	<update id="deleteAuthority"  parameterType="_int">
+	 	UPDATE AUTHORITY SET DELFLAG = 'Y' WHERE AID=#{aId}
+	</update>
+	<select id="selectNick" parameterType="string" resultType="_int">
+	select * from member where MNICK=#{mnick}
+	</select>
+	<select id="selectEmail" parameterType="string" resultType="_int">
+	select * from member where EMAIL=#{email}
+	</select>
+	<select id="selectMessageCount" parameterType="_int" resultType="_int">
+	select count(*) from message where TAKE_MNO=#{mNo} AND READFLAG='N' AND DELFLAG='N'
+	</select>
+</mapper>

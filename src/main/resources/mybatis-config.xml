@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE configuration PUBLIC
+"-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+
+	<!-- vo 객체를 위한 별청 선언 -->
+	<typeAliases>
+	    <!-- <typeAlias type="클래스경로" alias="별칭"/> -->
+	    <typeAlias type="com.kh.mhm.member.model.vo.Member" alias="Member"/>
+	    <typeAlias type="com.kh.mhm.myPage.model.vo.Schedule" alias="Schedule"/>
+	    <typeAlias type="com.kh.mhm.myPage.model.vo.Authority" alias="Authority"/>
+	    <typeAlias type="com.kh.mhm.message.model.vo.Message" alias="Message"/>
+		<typeAlias type="com.kh.mhm.board.model.vo.Board" alias="Board"/>
+		<typeAlias type="com.kh.mhm.board.model.vo.Fileref" alias="Fileref"/>
+		<typeAlias type="com.kh.mhm.member.model.vo.CompanyMember" alias="CompanyMember"/>
+	    <typeAlias type="com.kh.mhm.member.model.vo.BlackList" alias="BlackList" />
+		<typeAlias type="com.kh.mhm.timeLine.model.vo.TimeLine" alias="TimeLine"/>
+	    <typeAlias type="com.kh.mhm.timeLine.model.vo.TimeLineSmpl" alias="TimeLineSmpl"/>
+	    <typeAlias type="com.kh.mhm.timeLine.model.vo.PreTimeLine" alias="PreTimeLine"/>
+	    <typeAlias type="com.kh.mhm.message.model.vo.MessageSmpl" alias="MessageSmpl"/>
+	    <typeAlias type="com.kh.mhm.coment.model.vo.Coment" alias="Coment"/>
+		<typeAlias type="com.kh.mhm.map.model.vo.Map" alias="MapPersonal"/> 
+		<typeAlias type="com.kh.mhm.report.model.vo.Report" alias="Report"/> 
+    <typeAlias type="com.kh.mhm.likes.model.vo.Likes" alias="Likes"/> 
+    <typeAlias type="com.kh.mhm.message.model.vo.MessageBlock" alias="MessageBlock"/>
+
+  	</typeAliases>
+  	
+    <!-- 타임라인 timestamp<->string 변환 핸들러 -->
+  	<!-- <typeHandlers>
+		  <package name="com.kh.mhm.common"></package>
+	  </typeHandlers> -->
+  
+</configuration>

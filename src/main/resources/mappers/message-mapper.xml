@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Message">
+
+	<resultMap type="MessageBlock" id="MessageBlockMap">
+		<result column="MNICK" property="block_mNick" />
+	</resultMap>
+
+
+	<select id="selectMessageInbox" parameterType="_int" resultType="Message">
+		SELECT ME.MEID, ME.SPEND_MNO, ME.TAKE_MNO, M.MNICK, ME.MEDATE, ME.METITLE, ME.MECONTENT, 
+		ME.DELFLAG, ME.READFLAG, ME.STOREFLAG, ME.SENTDELFLAG 
+		FROM MESSAGE ME JOIN MEMBER M ON(ME.SPEND_MNO=M.MNO) 
+		WHERE ME.TAKE_MNO=#{mNo} AND ME.DELFLAG='N' AND ME.STOREFLAG='N' AND SPEND_MNO NOT IN(
+		SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo}) ORDER BY 1 DESC
+	</select>
+	
+	<update id="deleteMessage" parameterType="hashmap">
+		UPDATE MESSAGE SET DELFLAG='Y' WHERE MEID IN
+		<foreach collection="meId" item="arr" index="index" open="(" close=")" separator=",">
+			#{arr}
+		</foreach>
+	</update>
+	
+	<update id="storeMessage" parameterType="hashmap">
+		UPDATE MESSAGE SET STOREFLAG='Y' WHERE MEID IN
+		<foreach collection="meId" item="arr" index="index" open="(" close=")" separator=",">
+			#{arr}
+		</foreach>
+	</update>
+	
+	<update id="readAllMessage" parameterType="string">
+		UPDATE MESSAGE SET READFLAG='Y' WHERE TAKE_MNO=
+		(SELECT MNO FROM MEMBER WHERE MNICK=#{mNick})
+	</update>
+	
+	<select id="selectDetailOne" parameterType="_int" resultType="Message">
+		SELECT ME.MEID, ME.SPEND_MNO, ME.TAKE_MNO, M.MNICK, ME.MEDATE, ME.METITLE, ME.MECONTENT, 
+		ME.DELFLAG, ME.READFLAG, ME.STOREFLAG, ME.SENTDELFLAG 
+		FROM MESSAGE ME JOIN MEMBER M ON(ME.SPEND_MNO=M.MNO) WHERE ME.MEID=#{meId}
+	</select>
+	
+	<update id="deleteMessageOne" parameterType="_int">
+		UPDATE MESSAGE SET DELFLAG='Y' WHERE MEID=#{meId}
+	</update>
+	
+	<update id="storeMessageOne" parameterType="_int">
+		UPDATE MESSAGE SET STOREFLAG='Y' WHERE MEID=#{meId}
+	</update>
+	
+	<update id="updateReadFlag" parameterType="_int">
+		UPDATE MESSAGE SET READFLAG='Y' WHERE MEID=#{meId}
+	</update>
+	
+	<select id="selectMessageStore" parameterType="_int" resultType="Message">
+		SELECT ME.MEID, ME.SPEND_MNO, ME.TAKE_MNO, M.MNICK, ME.MEDATE, ME.METITLE, ME.MECONTENT, 
+		ME.DELFLAG, ME.READFLAG, ME.STOREFLAG, ME.SENTDELFLAG 
+		FROM MESSAGE ME JOIN MEMBER M ON(ME.SPEND_MNO=M.MNO) 
+		WHERE ME.TAKE_MNO=#{mNo} AND ME.DELFLAG='N' AND ME.STOREFLAG='Y' AND SPEND_MNO NOT IN(
+		SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo}) ORDER BY 1 DESC
+	</select>
+	
+	<select id="selectMessageSent" parameterType="_int" resultType="Message">
+		SELECT ME.MEID, ME.SPEND_MNO, ME.TAKE_MNO, M.MNICK, ME.MEDATE, ME.METITLE, ME.MECONTENT, 
+		ME.DELFLAG, ME.READFLAG, ME.STOREFLAG, ME.SENTDELFLAG 
+		FROM MESSAGE ME JOIN MEMBER M ON(ME.TAKE_MNO=M.MNO) WHERE ME.SPEND_MNO=#{mNo} AND ME.SENTDELFLAG='N' 
+		AND TAKE_MNO NOT IN(SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo})ORDER BY 1 DESC
+	</select>
+	
+	<update id="deleteSentMessage" parameterType="hashmap">
+		UPDATE MESSAGE SET SENTDELFLAG='Y' WHERE MEID IN
+		<foreach collection="meId" item="arr" index="index" open="(" close=")" separator=",">
+			#{arr}
+		</foreach>
+	</update>
+	
+	<select id="selectDetailSent" parameterType="_int" resultType="Message">
+		SELECT ME.MEID, ME.SPEND_MNO, ME.TAKE_MNO, M.MNICK, ME.MEDATE, ME.METITLE, ME.MECONTENT, 
+		ME.DELFLAG, ME.READFLAG, ME.STOREFLAG, ME.SENTDELFLAG 
+		FROM MESSAGE ME JOIN MEMBER M ON(ME.TAKE_MNO=M.MNO) WHERE ME.MEID=#{meId}
+	</select>
+	
+	<update id="deleteSentOne" parameterType="_int">
+		UPDATE MESSAGE SET SENTDELFLAG='Y' WHERE MEID=#{meId}
+	</update>
+	
+	<insert id="sendMessage" parameterType="MessageSmpl">
+		INSERT INTO MESSAGE VALUES(SEQ_MEID.NEXTVAL, #{mNo}, (SELECT MNO FROM MEMBER WHERE MNICK=#{mNick}), 
+		DEFAULT, #{meTitle}, #{meContent}, DEFAULT, DEFAULT, DEFAULT, DEFAULT)
+	</insert>
+	
+	<select id="findNick" parameterType="string" resultType="_int">
+		SELECT COUNT(*) FROM MEMBER WHERE MNICK=#{nick}
+	</select>
+	
+	<select id="countNewMessage" parameterType="_int" resultType="_int">
+		SELECT COUNT(*) FROM MESSAGE WHERE TAKE_MNO=#{mNo} AND DELFLAG='N' AND READFLAG='N' 
+		AND SPEND_MNO NOT IN(SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo})
+	</select>
+	
+	<select id="countMyMessage" parameterType="_int" resultType="_int">
+		SELECT COUNT(*) FROM MESSAGE ME JOIN MEMBER M ON(ME.SPEND_MNO=M.MNO) 
+		WHERE ME.TAKE_MNO=#{mNo} AND ME.DELFLAG='N' AND ME.STOREFLAG='N' 
+		AND SPEND_MNO NOT IN(SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo})
+	</select>
+	
+	<select id="countMessageSent" parameterType="_int" resultType="_int">
+		SELECT COUNT(*) FROM MESSAGE ME JOIN MEMBER M ON(ME.TAKE_MNO=M.MNO) 
+		WHERE ME.SPEND_MNO=#{mNo} AND ME.SENTDELFLAG='N' 
+		AND TAKE_MNO NOT IN(SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo})
+	</select>
+	
+	<select id="countMessageStore" parameterType="_int" resultType="_int">
+		SELECT COUNT(*) FROM MESSAGE ME JOIN MEMBER M ON(ME.SPEND_MNO=M.MNO) 
+		WHERE ME.TAKE_MNO=#{mNo} AND ME.DELFLAG='N' AND ME.STOREFLAG='Y' 
+		AND SPEND_MNO NOT IN(SELECT BLOCK_MNO FROM BLOCK_MESSAGE WHERE MNO=#{mNo})
+	</select>
+	
+	<select id="selectMessageBlock" parameterType="_int" resultMap="MessageBlockMap">
+		SELECT B.MNO, M.MNICK, B.BLOCK_DATE, B.BLOCK_NOTE 
+		FROM BLOCK_MESSAGE B JOIN MEMBER M ON(B.BLOCK_MNO=M.MNO) 
+		WHERE B.MNO=#{mNo}
+	</select>
+	
+	<select id="countMessageBlock" parameterType="_int" resultType="_int">
+		SELECT COUNT(*) FROM BLOCK_MESSAGE WHERE MNO=#{mNo}
+	</select>
+	
+	<delete id="unblockMessage" parameterType="map">
+		DELETE FROM BLOCK_MESSAGE WHERE MNO=#{mNo} AND BLOCK_MNO IN
+		<foreach collection="arr" item="item" index="index" open="(" close=")" separator=",">
+			(SELECT MNO FROM MEMBER WHERE MNICK=#{item})
+		</foreach>
+	</delete>
+	
+	<insert id="banMessage" parameterType="MessageBlock">
+		INSERT INTO BLOCK_MESSAGE VALUES(#{mNo}, (SELECT MNO FROM MEMBER 
+		WHERE MNICK=#{block_mNick}), DEFAULT, #{block_note})
+	</insert>
+	
+	<select id="checkBlock" parameterType="map" resultType="_int">
+		SELECT COUNT(*) FROM BLOCK_MESSAGE WHERE MNO=#{mNo} 
+		AND BLOCK_MNO=(SELECT MNO FROM MEMBER WHERE MNICK=#{mNick})
+	</select>
+	
+</mapper>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="member">
+	
+	<resultMap type="BlackList" id="BlackListMap">
+		<result column="MNO" property="mno" />
+		<result column="TARGET_ID" property="mno" />
+		<result column="MID" property="mid" />
+		<result column="REP_MID" property="rep_mid"/>
+		<result column="JOIN_DATE" property="joinDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="DROP_DATE" property="dropDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="EMAIL" property="email" />
+		<result column="GENDER" property="gender" />
+		<result column="AGE" property="age" />
+		<result column="End_Date" property="endDate" />
+		<result column="REASON" property="reason" />
+		<result column="RDETAIL" property="rdetail"/>
+		<result column="RDATE" property="rDate" javaType="java.sql.Date" jdbcType="DATE" />
+	</resultMap>
+	
+	<resultMap type="Member" id="memberMap">
+		<result column="MNO" property="mno" />
+		<result column="MID" property="mid" />
+		<result column="MPW" property="mpw" />
+		<result column="MNAME" property="mname" />
+		<result column="MNICK" property="mnick" />
+		<result column="MTYPE" property="mtype" />
+		<result column="EMAIL" property="email" />
+		<result column="GENDER" property="gender" />
+		<result column="AGE" property="age" />
+		<result column="PROFILE_PATH" property="profilePath" />
+		<result column="JOIN_DATE" property="joinDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="DROP_DATE" property="dropDate" javaType="java.sql.Date" jdbcType="DATE" />
+	</resultMap>
+	
+	<resultMap type="CompanyMember" id="compMemberMap">
+		<result column="JOIN_DATE" property="joinDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="DROP_DATE" property="dropDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="REQUEST_COUNT" property="grantCount" />
+	</resultMap>
+
+	<insert id="insertMember" parameterType="Member">
+		insert into member
+		values(
+		seq_mno.nextval, #{mid}, #{mpw}, #{mname}, #{mnick}, #{mtype},
+		#{email}, #{gender}, #{age}, #{profilePath}, DEFAULT, DEFAULT)
+	</insert>
+	
+	<select id="selectLogin" parameterType="string" resultMap="memberMap">
+		select * from member where mid = #{mid} and nvl2(drop_date, 1, 0) = 0
+	</select>
+	
+	<select id="selectOne" parameterType="string" resultMap="memberMap">
+		select * from member where mid = #{mid}
+	</select>
+
+	<select id="selectFindID" parameterType="string" resultType="Member">
+		select * from member where email = #{email}
+	</select>
+
+	<update id="updateMember" parameterType="Member">
+		UPDATE MEMBER SET MPW = #{mpw}, MNAME = #{mname}, MNICK = #{mnick}, EMAIL = #{email}, GENDER = #{gender}, AGE =#{age}, PROFILE_PATH=#{profilePath}
+		WHERE MID = #{mid}
+	</update>
+	
+	<update id="deleteMember" parameterType="Member">
+		UPDATE MEMBER SET DROP_DATE=SYSDATE
+		WHERE MID = #{mid}
+	</update>
+
+	<update id="updatePW" parameterType="Member">
+		update member set mpw = #{mpw}
+		where mid = #{mid}
+	</update>
+
+	<select id="checkIdDuplicate" statementType="CALLABLE" parameterType="hashmap">
+		{ CALL ID_DUP_CHK(#{mid, mode=IN, jdbcType=VARCHAR},
+			#{result, mode=OUT, jdbcType=NUMERIC, javaType=integer}
+			)
+		}
+	</select>
+	
+	<select id="checkNick" statementType="CALLABLE" parameterType="hashmap">
+		{ CALL NICK_CHK(#{mnick, mode=IN, jdbcType=VARCHAR},
+			#{result, mode=OUT, jdbcType=NUMERIC, javaType=integer}
+		    )
+		}
+	</select>
+	
+	<select id="checkEmail" statementType="CALLABLE" parameterType="hashmap">
+		{ CALL EMAIL_CHK(#{email, mode=IN, jdbcType=VARCHAR},
+			#{result, mode=OUT, jdbcType=NUMERIC, javaType=integer}
+		    )
+		}
+	</select>
+
+  <select id="checkPw" statementType="CALLABLE" parameterType="hashmap">
+		{ CALL PASS_CHK(#{mpw, mode=IN, jdbcType=VARCHAR},
+			#{result, mode=OUT, jdbcType=NUMERIC, javaType=integer}
+		    )
+		}
+	</select>
+
+	<select id="selectCommonMember" resultMap="memberMap">
+		SELECT mno, mid, mname, email, gender, age, join_date, drop_date FROM MEMBER
+		WHERE MTYPE = 'M'
+		order by mno
+	</select>
+
+	<select id="selectCompanyMember" resultMap="compMemberMap">
+		<!-- select mno, mid, mname, email, gender, age, join_date, drop_date from member
+		where mtype = 'C'
+		order by mno -->
+		select m.mno, m.mid, m.mname, m.email, m.gender, m.age, m.join_date, m.drop_date, 
+        count(request_date) request_count
+		from member m
+		full outer join authority a on (m.mno = a.mno)
+		where mtype = 'C'
+		group by m.mno, m.mid, m.mname, m.email, m.gender, 
+		m.age, m.join_date, m.drop_date
+		order by m.mno
+		
+	</select>
+
+	<select id="selectBlackMember" resultMap="BlackListMap">
+		select mno, mid, mname, email, gender, age, drop_date, end_date, reason 
+		from (select * from member join blacklist using(mno))
+		order by mno
+	</select>
+	
+	<select id="selectNowBlack" parameterType="_int" resultType="date">
+		select end_date from (select rownum, end_date from (select end_date from blacklist where mno = #{mno} order by end_date desc) where rownum=1)
+	</select>
+	
+	<select id="searchMember" parameterType="String" resultMap="memberMap">
+		select * from member
+		where ${condition} like '%'||#{keyword}||'%'
+		order by mtype, mno
+	</select>
+	
+	<select id="selectReportList" parameterType="_int" resultMap="BlackListMap">
+		<!-- select * 
+		from blacklist
+		join member using(mno)
+		full outer join report on(mno = target_id)
+		where mno = #{mno} and end_date > sysdate -->
+		select target_id, report_mno, rdate, rdetail, (select mid from member where mno = r.report_mno) rep_mid
+		from report r
+		where target_id = #{mno}
+	</select>
+	
+	<update id="clearBlackList" parameterType="_int">
+		update blacklist set end_date = sysdate
+		where mno = #{mno}
+	</update>
+	
+	<select id="selectOneMno" parameterType="_int" resultMap="memberMap">
+		select * from member where mno = #{mno}
+	</select>
+  
+  <select id="selectCheckLogin" parameterType="string" resultType="_int">
+		select count(*) from member where email like #{gEmail} and mid not like #{gEmail}
+	</select>
+</mapper>

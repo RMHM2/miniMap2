@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="TimeLine">
+	
+	<resultMap type="Member" id="MemberMap">
+		<result column="MNO" property="mno" />
+		<result column="MID" property="mid" />
+		<result column="MPW" property="mpw" />
+		<result column="MNAME" property="mname" />
+		<result column="MNICK" property="mnick" />
+		<result column="MTYPE" property="mtype" />
+		<result column="EMAIL" property="email" />
+		<result column="GENDER" property="gender" />
+		<result column="AGE" property="age" />
+		<result column="PROFILE_PATH" property="profilePath" />
+		<result column="JOIN_DATE" property="joinDate" javaType="java.sql.Date" jdbcType="DATE" />
+		<result column="DROP_DATE" property="dropDate" javaType="java.sql.Date" jdbcType="DATE" />
+	</resultMap>
+	
+	<select id="selectMno" parameterType="string" resultType="_int">
+		SELECT MNO FROM MEMBER WHERE MNICK=#{mnick}
+	</select>
+
+	<insert id="insertTimeLine" parameterType="TimeLineSmpl">
+		INSERT INTO TIMELINE VALUES (SEQ_TID.NEXTVAL, #{tType}, #{mNo}, DEFAULT, #{tContent}, DEFAULT, #{hashTag})
+	</insert>
+	
+	<select id="getMemberByNick" parameterType="string" resultMap="MemberMap">
+		SELECT * FROM MEMBER WHERE MNICK=#{mnick}
+	</select>
+	
+	<select id="selectPreTimeLine" resultType="PreTimeLine">
+		SELECT TID, TSORT, PROFILE_PATH, MNICK, TDATE, TCONTENT, HASHTAG FROM (
+		SELECT T.TID, TT.TSORT, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG, B.BLOCK 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) JOIN TIMELINE_TYPE TT USING(TTYPE) 
+		LEFT JOIN BLOCK_TIMELINE B ON(T.MNO=B.MNO AND T.TID=B.TID) 
+        WHERE BLOCK IS NULL ORDER BY T.TID DESC) WHERE 
+		<![CDATA[ROWNUM<=20]]> 
+		ORDER BY 1 ASC
+	</select>
+	
+	<select id="loadMoreLine" parameterType="_int" resultType="PreTimeLine">
+		SELECT TID, TSORT, PROFILE_PATH, MNICK, TDATE, TCONTENT, HASHTAG FROM (
+		SELECT T.TID, TT.TSORT, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG, B.BLOCK 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) JOIN TIMELINE_TYPE TT USING(TTYPE) 
+		LEFT JOIN BLOCK_TIMELINE B ON(T.MNO=B.MNO AND T.TID=B.TID) 
+		WHERE <![CDATA[T.TID<]]>
+		#{tId} AND BLOCK IS NULL ORDER BY 1 DESC)
+		WHERE <![CDATA[ROWNUM<=10]]> 
+	</select>
+	
+	<select id="getTid" resultType="_int">
+		SELECT MAX(TID) FROM TIMELINE
+	</select>
+	
+	<insert id="blockTimeLine" parameterType="map">
+		INSERT INTO BLOCK_TIMELINE VALUES((SELECT MNO FROM MEMBER WHERE MNICK=#{mNick}), #{tId}, 'Y')
+	</insert>
+	
+	<select id="mainTimeLine" resultType="PreTimeLine">
+		SELECT * FROM (SELECT T.TID, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) ORDER BY T.TID DESC) WHERE 
+		<![CDATA[ROWNUM<=10]]>
+	</select>
+	
+	<select id="searchTimeLine" resultType="PreTimeLine">
+		SELECT T.TID, TT.TSORT, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) JOIN TIMELINE_TYPE TT ON(T.TTYPE=TT.TTYPE) 
+		WHERE T.HASHTAG LIKE '%'||#{text}||'%' ORDER BY 1 ASC
+	</select>
+	
+	<select id="classifyTimeLine" resultType="PreTimeLine">
+		SELECT TID, TSORT, PROFILE_PATH, MNICK, TDATE, TCONTENT, HASHTAG FROM (
+		SELECT T.TID, TT.TSORT, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG, B.BLOCK 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) JOIN TIMELINE_TYPE TT ON(T.TTYPE=TT.TTYPE) 
+		LEFT JOIN BLOCK_TIMELINE B ON(T.MNO=B.MNO AND T.TID=B.TID) 
+		WHERE BLOCK IS NULL AND TT.TTYPE=#{tType} ORDER BY T.TID DESC) WHERE 
+		<![CDATA[ROWNUM<=20]]> 
+	</select>
+	
+	<select id="loadMoreClassify" resultType="PreTimeLine">
+		SELECT TID, TSORT, PROFILE_PATH, MNICK, TDATE, TCONTENT, HASHTAG FROM (
+		SELECT T.TID, TT.TSORT, M.PROFILE_PATH, M.MNICK, T.TDATE, T.TCONTENT, T.HASHTAG, B.BLOCK 
+		FROM MEMBER M JOIN TIMELINE T ON(M.MNO=T.MNO) JOIN TIMELINE_TYPE TT ON(T.TTYPE=TT.TTYPE) 
+		LEFT JOIN BLOCK_TIMELINE B ON(T.MNO=B.MNO AND T.TID=B.TID) 
+		WHERE <![CDATA[T.TID<]]>
+		#{tId} AND BLOCK IS NULL AND TT.TTYPE=#{tType} ORDER BY 1 DESC) WHERE 
+		<![CDATA[ROWNUM<=10]]>
+	</select>
+	
+</mapper>

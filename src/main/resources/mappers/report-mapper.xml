@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+"-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="report">
+
+	<resultMap type="Board" id="boardMap"></resultMap>
+	
+	<insert id="insertReport" parameterType="Report">
+INSERT INTO REPORT 
+SELECT SEQ_RID.NEXTVAL,#{target_type},#{target_id},#{rcode},'Y',#{report_mno},SYSDATE,#{rdetail} 
+FROM DUAL 
+WHERE NOT EXISTS(
+SELECT * FROM REPORT WHERE TARGET_TYPE=#{target_type} AND TARGET_ID=#{target_id} AND REPORT_MNO=#{report_mno})
+	</insert>
+	
+</mapper>
