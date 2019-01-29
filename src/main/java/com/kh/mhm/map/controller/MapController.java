@@ -7,21 +7,20 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.kh.mhm.map.model.vo.MyMap;
-import com.kh.mhm.member.model.vo.Member;
 
 @Controller
 public class MapController {
@@ -137,6 +136,80 @@ public class MapController {
 
 		return parts;
 
+	}
+	
+	// new coding part
+	@RequestMapping("/map/map.go")
+	public String map() {
+		return "/map/map";
+	}
+	
+	@RequestMapping("/map/mapSave.do")
+	@ResponseBody
+	public boolean mapSave(@RequestParam List<Object> position, @RequestParam List<String> content, HttpSession session) {
+		
+		boolean result = createGeoJson(position, content, session);
+		
+		return result;
+	}
+	
+	@RequestMapping("/map/getMapData.do")
+	@ResponseBody
+	public String getMapData() {
+		
+		
+		return null;
+	}
+	
+	public boolean createGeoJson(List<Object> position, List<String> content, HttpSession session) {
+		
+		boolean result = false;
+		
+		String saveDir = session.getServletContext().getRealPath("/resources/upload/map/");
+		File dir = new File(saveDir);
+		if(dir.exists() == false) dir.mkdirs();
+		
+		// 서버에 저장할 파일명 지정
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+		String today = formatter.format(new Date());
+		String rename = today + "-" + UUID.randomUUID().toString().substring(20) + ".json";
+		
+		try(BufferedWriter bw = new BufferedWriter(new FileWriter(new File(saveDir + rename))))
+		{
+			// json file Start
+			StringBuilder sb = new StringBuilder();
+			
+			sb.append((char)123 + "\n");
+			sb.append((char)34 + "type" + (char)34 + ":" + (char)34 + "FeatureCollection" + (char)34 + ",\n");
+			sb.append((char)34 + "features" + (char)34 + ":[" + "\n");
+			
+			// point start
+			for(int i=0; i<content.size(); i++) {
+				sb.append((char)123 + "\n");
+				sb.append((char)34 + "type" + (char)34 + ":" + (char)34 + "Features" + (char)34 + ",\n");
+				sb.append((char)34 + "geometry" + (char)34 + ":{\n");
+				sb.append((char)34 + "type" + (char)34 + ":" + (char)34 + "Point" + (char)34 + ",\n");
+				sb.append((char)34 + "coordinates" + (char)34 + ":" + ((content.size()<2)?Arrays.toString(position.toArray()):"[" + position.get(i) + "]") + "\n");
+				sb.append((char)125 + ",\n");
+				sb.append((char)34 + "properties" + (char)34 + ":" + (char)123);
+				sb.append((char)34 + "content" + (char)34 + ":" + (char)34 + content.get(i) + (char)34 + (char)125 + "\n");
+				sb.append((char)125 + ((position.size()-1!=i)?",":"") + "\n");
+			}
+			// point end
+			
+			sb.append("]\n");
+			sb.append((char)125 + "\n");
+			// json file end
+			
+			bw.write(sb.toString());
+			session.setAttribute("fileName", rename);
+			result = true;
+		} catch(Exception e) {
+			e.getStackTrace();
+			result = false;
+		}
+
+		return result;
 	}
 	
 }

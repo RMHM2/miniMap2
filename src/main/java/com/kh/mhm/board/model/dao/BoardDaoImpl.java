@@ -322,4 +322,9 @@ public class BoardDaoImpl implements BoardDao {
 		return sqlSession.selectOne("board.selectBoardMemberType", mno);
 	}
 
+	@Override
+	public String selectOneFileName(Map<String, Object> param) {
+		return sqlSession.selectOne("board.selectOneFileName", param);
+	}
+
 }

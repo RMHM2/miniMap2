@@ -284,3 +284,55 @@ function reportModal(mno, tid, type){
 	
 	$('#report-modal').click();
 }
+
+function fileChk(fileName){
+	if(fileName != "" || fileName != undefined){
+		
+		$mapDiv = $("<div>").attr({
+			'id' : 'map',
+			'style' : 'width:100%;height:400px;'
+		})
+		
+		$mapScript = $('<script>').attr({
+			'type' : 'text/javascript',
+			'src' : '//dapi.kakao.com/v2/maps/sdk.js?appkey=7c640246a6e5ab60531d33745c010be1'
+		})
+		
+		$('head').append($mapScript)
+		$('#BContent').after($mapDiv);
+		
+		var container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
+		var options = { //지도를 생성할 때 필요한 기본 옵션
+				center: new daum.maps.LatLng(33.38, 126.570667), //지도의 중심좌표.
+				level: 10 //지도의 레벨(확대, 축소 정도)
+		};
+		var map = new daum.maps.Map(container, options); //지도 생성 및 객체 리턴
+		
+		$.ajax({
+			url : "/resources/upload/map/"+fileName,
+			success : function(result){
+				console.log(result.features);
+				console.log(result.features.length);
+				var data = result.features;
+				var markers = [];
+				var infowindows = [];
+				for(var i=0; i<data.length; i++){
+					var type = data[i].geometry.type;
+					if(type=="Point"){
+						
+						var marker = new daum.maps.Marker({
+							position: position
+						});
+						var infowindow = new daum.maps.InfoWindow({
+							content : '<div style="padding:5px;">' + txt + '</div>'
+						});
+						
+					}
+				}
+			},
+			error : function(result){
+				console.log(result);
+			}
+		})
+	}
+}

@@ -114,7 +114,7 @@
 				<input type="button" class="btn btn-theme" onclick="likesEvent();" name="likes" value="추천하기">
 				</c:if>
 				<c:if test="${b.isNotice eq 'N' and b.MNo ne member.mno}">				
-          <a id="report-modal" href="#report-modal-container" role="button" class="btn btn-danger" data-toggle="modal">신고하기</a>
+          			<a id="report-modal" href="#report-modal-container" role="button" class="btn btn-danger" data-toggle="modal">신고하기</a>
 				</c:if>
 				<c:if test="${b.RFlag eq 'Y' }">
 				<input type="button" class="btn btn-warning"
@@ -374,16 +374,12 @@
 			}else{   //취소
 			    return;
 			}	
-			
-			
 		}
-		
-		
-		
 		
 	</script>
 	
 	 
 </body>
- 
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=7c640246a6e5ab60531d33745c010be1"></script>
+<script>fileChk("${mapFile}")</script>
 </html>

@@ -249,6 +249,10 @@ public class BoardServiceImpl implements BoardService {
 	public String selectBoardMemberType(int mno) {
 		return boardDao.selectBoardMemberType(mno);
 	}
+	@Override
+	public String selectOneFileName(Map<String, Object> param) {
+		return boardDao.selectOneFileName(param);
+	}
 	
 	
 }

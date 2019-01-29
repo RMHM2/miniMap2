@@ -301,7 +301,8 @@ public class BoardController {
 	public ModelAndView boardinsert(Board board, Model model, HttpSession session, HttpServletRequest req) {
 
 		ModelAndView mv = new ModelAndView();
-
+		String mapFile = (String)session.getAttribute("fileName");
+		
 		List<String> imgList = new ArrayList<String>();
 		String str = "upload/";
 		int start = 0;
@@ -316,7 +317,7 @@ public class BoardController {
 			start = end;
 		}
 
-		if (imgList.size() > 0)
+		if (imgList.size() > 0 || mapFile != null)
 			board.setHasFile("Y");
 		else
 			board.setHasFile("N");
@@ -335,6 +336,15 @@ public class BoardController {
 					fref.setChange_Name(imgList.get(i));
 					boardService.insertImgFile(fref);
 				}
+			}
+			// 지도 파일이 존재하면 등록
+			if(mapFile!=null) {
+				Fileref fref = new Fileref();
+				fref.setbId(board.getBId());
+				fref.setfType("M");
+				fref.setOrigin_Name(mapFile);
+				fref.setChange_Name(mapFile);
+				boardService.insertImgFile(fref);
 			}
 			mv.addObject("msg", "게시물 등록을 성공하였습니다!");
 		} catch (Exception e) {
@@ -370,38 +380,45 @@ public class BoardController {
 	}
 
 	@RequestMapping("/board/boardview.do")
-	public ModelAndView boardview(@RequestParam int BId, Model model,
-			HttpServletRequest request) {
-      Member m = (Member)request.getSession().getAttribute("member");		
-      ModelAndView mv = new ModelAndView();
-      // 게시물 볼대 비로그인시 로그인페이지로 이동.
-      if(request.getSession().getAttribute("member") == null) {
+	public ModelAndView boardview(@RequestParam int BId, Model model, HttpServletRequest request) {
+		Member m = (Member)request.getSession().getAttribute("member");		
+		ModelAndView mv = new ModelAndView();
+		// 게시물 볼대 비로그인시 로그인페이지로 이동.
+		if(request.getSession().getAttribute("member") == null) {
 			mv.addObject("msg", "로그인이 필요합니다.");
 			mv.addObject("url", "/member/loginPage.go"); 
 			mv.setViewName("common/redirect");
 			/*response.sendRedirect("/member/loginPage.go");*/			
 		}else {
-        Board b = boardService.selectOneBoard(BId);	       
-        if(b.getBCode() != 5 && b.getDelFlag().equals("N")) {
+			Board b = boardService.selectOneBoard(BId);	       
+			if(b.getBCode() != 5 && b.getDelFlag().equals("N")) {
 				List<Coment> clist = comentService.selectCometList(BId);
 				boardService.updateOneCount(BId);
+				if(b.getHasFile().equals("Y")) {
+					// 지도 파일 가져오기
+					Map<String, Object> param = new HashMap<String, Object>();
+					param.put("bid", BId);
+					param.put("type", "M");
+					mv.addObject("mapFile", boardService.selectOneFileName(param));
+				}
+				
 				mv.addObject("b", b).addObject("clist", clist);
 				mv.setViewName("board/boardview");
 			} else {
 				mv.addObject("msg", "잘못된 게시물 요청입니다.").addObject("url", "/board/boardlist1.do");
 				mv.setViewName("common/redirect");
 			}
-      if(b.getRFlag().equals("Y")) {
-        if(m.getMtype().equals("A")){
-          List<Coment> clist = comentService.selectCometList(BId);
-          boardService.updateOneCount(BId);
-          mv.addObject("b", b).addObject("clist", clist);
-          mv.setViewName("board/boardview");
-        } else {
-          mv.addObject("msg", "관리자만 접근가능합니다.").addObject("url", "/board/boardlist1.do");
-          mv.setViewName("common/redirect");
-        }			
-      }
+			if(b.getRFlag().equals("Y")) {
+				if(m.getMtype().equals("A")){
+					List<Coment> clist = comentService.selectCometList(BId);
+					boardService.updateOneCount(BId);
+					mv.addObject("b", b).addObject("clist", clist);
+					mv.setViewName("board/boardview");
+				} else {
+					mv.addObject("msg", "관리자만 접근가능합니다.").addObject("url", "/board/boardlist1.do");
+					mv.setViewName("common/redirect");
+				}			
+			}
 		}
 		return mv;
 	}
