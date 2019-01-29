@@ -100,4 +100,6 @@ public interface BoardService {
 	List<Board> selectRecentBoard(Map<String, Integer> param);
 	
 	String selectBoardMemberType(int mno);
+
+	String selectOneFileName(Map<String, Object> param);
 }

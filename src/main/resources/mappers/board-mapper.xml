@@ -293,4 +293,8 @@
 		select mtype from member where mno = #{mno}
 	</select>
 	
+	<select id="selectOneFileName" parameterType="hashmap" resultType="string">
+		select change_name from fileref where bid = #{bid} and ftype = #{type} and delflag = 'N'
+	</select>
+	
 </mapper>
