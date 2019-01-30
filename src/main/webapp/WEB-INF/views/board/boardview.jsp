@@ -381,5 +381,5 @@
 	 
 </body>
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=7c640246a6e5ab60531d33745c010be1"></script>
-<script>fileChk("${mapFile}")</script>
+<script>fileChk('${fn:trim(mapFile)}')</script>
 </html>

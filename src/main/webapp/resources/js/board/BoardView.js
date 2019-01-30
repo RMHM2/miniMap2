@@ -286,7 +286,8 @@ function reportModal(mno, tid, type){
 }
 
 function fileChk(fileName){
-	if(fileName != "" || fileName != undefined){
+	
+	if(fileName != ""){
 		
 		$mapDiv = $("<div>").attr({
 			'id' : 'map',
@@ -308,25 +309,35 @@ function fileChk(fileName){
 		};
 		var map = new daum.maps.Map(container, options); //지도 생성 및 객체 리턴
 		
+		var pMarkers = [];
+		var pInfos = [];
+		
 		$.ajax({
 			url : "/resources/upload/map/"+fileName,
 			success : function(result){
 				console.log(result.features);
-				console.log(result.features.length);
+				
 				var data = result.features;
-				var markers = [];
-				var infowindows = [];
+				
 				for(var i=0; i<data.length; i++){
 					var type = data[i].geometry.type;
 					if(type=="Point"){
+						var markerPosition = new daum.maps.LatLng(data[i].geometry.coordinates[1], data[i].geometry.coordinates[0]); 
 						
 						var marker = new daum.maps.Marker({
-							position: position
+							position: markerPosition
 						});
 						var infowindow = new daum.maps.InfoWindow({
-							content : '<div style="padding:5px;">' + txt + '</div>'
+						    content : '<div style="padding:5px;">' + data[i].properties.content + '</div>',
+						    removable : true
 						});
 						
+						pMarkers.push(marker);
+						pInfos.push(infowindow);
+						
+						marker.setMap(map);
+						
+						daum.maps.event.addListener(marker, 'click', markerClickListener(map, marker, infowindow));
 					}
 				}
 			},
@@ -335,4 +346,11 @@ function fileChk(fileName){
 			}
 		})
 	}
+}
+
+// 인포윈도우를 표시하는 클로저
+function markerClickListener(map, marker, infowindow) {
+    return function() {
+        infowindow.open(map, marker);
+    };
 }
