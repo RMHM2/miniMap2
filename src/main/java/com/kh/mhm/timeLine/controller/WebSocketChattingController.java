@@ -108,4 +108,9 @@ public class WebSocketChattingController {
 		}
 		
 	}
+	
+	@RequestMapping("/popUp.tl")
+	public String tlPopUp() {
+		return "timeLine/tlMap";
+	}
 }

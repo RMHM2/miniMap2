@@ -134,13 +134,17 @@
 					<textarea rows="6" cols="150" name='message' id='message'
 						placeholder="어떤 경험을 하고 계신가요?&#13;&#10;어디에 방문하셨나요?&#13;&#10;음식은 맛있게 드셨나요?&#13;&#10;자유롭게 정보를 공유해주세요!"></textarea>
 					<textarea rows="1" cols="150" name="tag" id="tag"
-						placeholder="어디에 계신가요?"></textarea>
+						placeholder="어디에 계신가요?" onclick="api();"></textarea>
 					<div class="remaining">
 						<span class="count">250</span>
 					</div>
 					<div class="remaining2">
 						<span class="count2">50</span>
 					</div>
+					<!-- <div class="apiTestBtn">
+						<textarea name="" id="apitext" cols="30" rows="10"></textarea>
+						<button onclick='api();'>api</button>
+					</div> -->
 					<div class="btnAlign">
 
 						<div class="hidBtn">
@@ -579,6 +583,14 @@
 			}
 		});
 		return list;
+	}
+	
+	function api(){
+		var popUrl = "/popUp.tl";
+
+		var popOption = "width=765, height=505, resizable=no, scrollbars=no, status=no; fullscreen=no; tollbar=no; menubar=no;";
+
+		window.open(popUrl, "", popOption);
 	}
 	
 	</script>
