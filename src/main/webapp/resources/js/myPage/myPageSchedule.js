@@ -12,21 +12,19 @@ $.ajax({
 			var list =data.list;
 			temper = data.temper;
 			weather = data.weather;
-			
-			/*console.log("msg : " + data.msg);*/
-			/*if(data.msg != undefined){
-				alert(data.msg);
-				location.href="/myPage/selectScheduleNav.do";
-			}*/
+
 			var tmpList = [];
 			for(var i =0; i<list.length;i++){
+				/*console.log("---");
+				console.log("local : ???"+list[i].local[1]);*/
 				content = {
 						title : list[i].title,
 						start : list[i].start,
 						end : list[i].end +"T23:59:59" ,
 						color : list[i].color,
 						content : list[i].content,
-						sId : list[i].sId
+						sId : list[i].sId,
+						localAll : list[i].local
 				};
 			
 				tmpList.push(content);
@@ -38,7 +36,7 @@ $.ajax({
 			}
 		},
 		error : function(e){
-			console.log(e)
+	/*		console.log(e)*/
 		},
 		complete : function(){
 			$('#loading').hide();
@@ -49,12 +47,95 @@ $.ajax({
 				$('#calendar').hide();
 				$('#loading').show();
 				nextTemper();
+				mymap();
 			});
 		}
 	})
 
 })
+function maptest(){
+	
 
+	var infowindow = new daum.maps.InfoWindow({zIndex:1});
+	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+    mapOption = { 
+        center: new daum.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+        level: 7 // 지도의 확대 레벨
+    };
+
+	var map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+	
+	// 장소 검색 객체를 생성합니다
+	var ps = new daum.maps.services.Places();
+	var texttest ="";
+	$('#textSearch').blur(function(){
+		texttest = $('#textSearch').val();
+		/*console.log($('#textSearch').val());*/
+		ps.keywordSearch('이태원 맛집', placesSearchCB); 
+	
+	
+	});
+
+	// 키워드 검색 완료 시 호출되는 콜백함수 입니다
+	function placesSearchCB (data, status, pagination) {
+	    if (status === daum.maps.services.Status.OK) {
+	        // 검색된 장소 위치를 기준으로 지도 범위를 재설정하기위해
+	        // LatLngBounds 객체에 좌표를 추가합니다
+	        var bounds = new daum.maps.LatLngBounds();
+
+	 /*       for (var i=0; i<data.length; i++) {
+	            displayMarker(data[i]);    
+	            bounds.extend(new daum.maps.LatLng(data[i].y, data[i].x));
+	        }       
+*/
+	        // 검색된 장소 위치를 기준으로 지도 범위를 재설정합니다
+	        map.setBounds(bounds);
+	    } 
+	}
+	// 지도에 클릭 이벤트를 등록합니다
+	daum.maps.event.addListener(map, 'click', function(mouseEvent) {  
+	    // 클릭한 위도, 경도 정보를 가져옵니다 
+	   /*  var latlng = mouseEvent.latLng; 
+	    // 마커 위치를 클릭한 위치로 옮깁니다
+	    marker.setPosition(latlng); */
+		/*console.log(mouseEvent);
+		console.log(mouseEvent.latLng);
+		*/
+		addMarker(mouseEvent.latLng);  
+	});
+	
+	// 지도에 표시된 마커 객체를 가지고 있을 배열입니다
+	var markers = [];
+	// 마커를 생성하고 지도위에 표시하는 함수입니다
+	
+	
+	
+	function addMarker(position) {
+	    console.log("포지션"+position)
+	    // 마커를 생성합니다
+	    var marker = new daum.maps.Marker({
+	        position: position
+	    });
+
+	    // 마커가 지도 위에 표시되도록 설정합니다
+	    marker.setMap(map);
+	    // 생성된 마커를 배열에 추가합니다
+	    markers.push(position);
+	    
+		 $('#markers').val(markers);	
+	}
+
+}
+
+// 마커를 클릭하면 장소명을 표출할 인포윈도우 입니다
+
+// 지도 클릭 이벤트를 등록한다 (좌클릭 : click, 우클릭 : rightclick, 더블클릭 : dblclick)	
+/*  	daum.maps.event.addListener(marker, 'click', function() {   
+		console.log("한번클릭");
+		 infowindow.setContent('<div style="padding:5px;font-size:12px;">' + "test" + '</div>');
+     infowindow.open(map, marker);  
+	
+});  */
 function nextTemper(){	
 		var date = $("#calendar").fullCalendar("getDate");
 		var month = new Date(date).getMonth()+1;
@@ -71,13 +152,13 @@ function nextTemper(){
 				for(var i = 0; i<data.length;i++){
 					arrTemper[i] = data[i].low + "/" + data[i].high;
 				}
-				console.log("버튼" + arrTemper);
+				/*console.log("버튼" + arrTemper);*/
 				temperarr(month,arrTemper); 
 				
 				if((lastToday.getMonth()+1)==month)weaderToday();
 			},
 			error : function(e) {
-				console.log("error" + data);
+			/*	console.log("error" + data);*/
 			},complete : function(){
 				$('#loading').hide();
 				$('#calendar').show();
@@ -116,9 +197,55 @@ function getFullcalendar(){
 	        } , 
 	        eventClick: function(calEvent, jsEvent, view) {
 
-	    	if(calEvent.end==null){
-	    		calEvent.end=calEvent.start
-	    	}
+	        	var infowindow = new daum.maps.InfoWindow({zIndex:1});
+	        	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+	            mapOption = { 
+	                center: new daum.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+	                level: 8 // 지도의 확대 레벨
+	            };
+	        	var map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+	        	// 지도에 클릭 이벤트를 등록합니다
+	     
+	        	for(var i =0; i<calEvent.localAll.length;i++){
+		    		
+		    		var arr = calEvent.localAll[i].split(',');
+		    		console.log("arr : " + arr);
+		    		
+		    		var markertest = new daum.maps.Marker({
+		    			map: map, // 마커를 표시할 지도   
+		    			position: new daum.maps.LatLng(arr[0],arr[1])// 마커를 표시할 위치
+		        });
+		    		
+		    		
+		        // 마커가 지도 위에 표시되도록 설정합니다
+		        markertest.setMap(map);
+		    	}	
+	        	
+	        	daum.maps.event.addListener(map, 'click', function(mouseEvent) {  
+	        	    // 클릭한 위도, 경도 정보를 가져옵니다 
+	        	   /*  var latlng = mouseEvent.latLng; 
+	        	    // 마커 위치를 클릭한 위치로 옮깁니다
+	        	    marker.setPosition(latlng); */
+	        		
+	        	addMarker(mouseEvent.latLng);  
+	        	});
+	        	
+	        	var markers = [];
+	
+	        	function addMarker(position) {
+	        	    console.log("포지션"+position)
+	        	    // 마커를 생성합니다
+	        	    var marker = new daum.maps.Marker({
+	        	        position: position
+	        	    });
+
+	        	    // 마커가 지도 위에 표시되도록 설정합니다
+	        	    marker.setMap(map);
+	        	    // 생성된 마커를 배열에 추가합니다
+	        	    markers.push(position);
+	        	    
+	        		 $('#markers').val(markers);	
+	        	}
 	    	$('#myModalLabel').text('일정수정');
 	    	  $('#sId').val(calEvent.sId);  
 	    	 	$('#sTitle').val(calEvent.title);
@@ -128,11 +255,16 @@ function getFullcalendar(){
 	    		$('#sColor').val(calEvent.color);
 	    		$('#result').attr("style","display:none");
 	    		$('#updateresult').attr("style","display:block");
-	    		  $('#insertC').dialog({}); 
-	    		 $('#test').modal('show');
+	    		
+	    		$('#test').modal('show');
+	        
+	        
+	        
+	        
+	        
 	        },
 	          eventMouseover:function(event , jsEvent , view){
-	        	   console.log(event); 
+	        	  
 	          },
 	          eventMouseout:function ( event , jsEvent , view ) {
 	        	  
@@ -145,9 +277,8 @@ function getFullcalendar(){
 			$('#endDateT').val(date.format());
 			$('#result').attr("style","display:block");
     		$('#updateresult').attr("style","display:none");
+    		maptest();
     		$('#test').modal('show');
-    		$('#insertC').dialog({}); 
-
 		},
 		defaultDate : new Date(),
 		
@@ -176,7 +307,7 @@ function weaderToday(){
 		else if(we.match(/비/))sr = "<img src='/resources/img/weather/rain1.PNG' width='15px';height='15px'>";
 		else if(we.match(/눈/)) sr = "<img src='/resources/img/weather/snow1.PNG' width='15px';height='15px'>"; 
 		else sr = "<img src='/resources/img/weather/sunCloud1.PNG' width='15px';height='15px'>";
-		console.log(re);
+	/*	console.log(re);*/
 		$('#calendar').find('td[data-date='+re+']').prepend(sr);
 	}
 }
@@ -210,6 +341,7 @@ function scheduleTest(){
 		 return true;
 }
 function updateS(){
+	
 	console.log("update실행");
 	$('#formAction').attr("action","updateSchedule.do");
 }
