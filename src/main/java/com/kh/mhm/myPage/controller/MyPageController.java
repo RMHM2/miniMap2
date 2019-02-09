@@ -1,6 +1,6 @@
 package com.kh.mhm.myPage.controller;
 
-import java.text.ParseException;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +13,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
@@ -22,6 +25,8 @@ import java.sql.Date;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -43,13 +48,16 @@ import com.kh.mhm.board.model.service.BoardService;
 import com.kh.mhm.board.model.vo.Board;
 import com.kh.mhm.common.Policy;
 import com.kh.mhm.common.util.Utils;
+import com.kh.mhm.map.model.vo.MyMap;
 import com.kh.mhm.member.model.service.MemberService;
 import com.kh.mhm.member.model.vo.Member;
 import com.kh.mhm.message.model.service.MessageService;
 import com.kh.mhm.message.model.vo.Message;
 import com.kh.mhm.myPage.model.service.MyPageService;
 import com.kh.mhm.myPage.model.vo.Authority;
+import com.kh.mhm.myPage.model.vo.MyPageMap;
 import com.kh.mhm.myPage.model.vo.Schedule;
+
 import com.sun.media.sound.SoftSynthesizer;
 
 @SessionAttributes(value = { "member" })
@@ -65,17 +73,61 @@ public class MyPageController {
 	private BCryptPasswordEncoder bcpe;
 	private String loc = "/";
 	private String msg = "";
-
+	
 	/* 일정 추가 */
 	@RequestMapping("/myPage/insertSchedule.do")
-	public String insertSchedule(Member member, @RequestParam String startDateT, @RequestParam String endDateT, Schedule schedule, Model model) throws IOException {
+	public String insertSchedule(@RequestParam String[] markers,Member member, @RequestParam String startDateT, @RequestParam String endDateT, Schedule schedule, Model model, HttpSession session) throws IOException {
 		schedule.setStart_Date(Date.valueOf(startDateT));
 		schedule.setEnd_Date(Date.valueOf(endDateT));
 		schedule.setMNo(member.getMno());
-		System.out.println("schedule: " + schedule);
-
+		if(markers.length!=0) {
+			String saveDir = session.getServletContext().getRealPath("/resources/file/map");
+			File dir = new File(saveDir);
+			if(dir.exists() == false) dir.mkdirs();
+			JSONObject mapInfo = new JSONObject();
+			mapInfo.put("id", member.getMid());
+			//위도 경도 추가
+			
+			JSONArray list = new JSONArray();
+			ArrayList al = new ArrayList();
+			for(int i =0; i<markers.length;i+=2) {
+				/*al.add(markers[i].replaceAll("\\(|\\)", "")+","+markers[i+1].replaceAll("\\(|\\)", ""));*/
+				/*list.add(markers[i].replaceAll("\\(|\\)", "")+","+markers[i+1].replaceAll("\\(|\\)", ""));*/
+				MyPageMap m =null;
+				System.out.println(markers[i].replaceAll("\\(|\\)", ""));
+				/*m.setMapLat(markers[i].replaceAll("\\(|\\)", ""));
+				m.setMapLng(markers[i+1].replaceAll("\\(|\\)", ""));
+				System.out.println(m);
+				list.add(m);*/
+				
+				/* {ib: 126.60075192413062, jb: 33.376175179359976} */
+				/*JSONObject jbib = new JSONObject();
+				jbib.put("jb", markers[i].replaceAll("\\(|\\)", ""));
+				jbib.put("ib", markers[i+1].replaceAll("\\(|\\)", ""));
+				list.add(jbib);*/
+				
+				list.add(markers[i].replaceAll("\\(|\\)", "")+","+markers[i+1].replaceAll("\\(|\\)", ""));
+				/*mapInfo.put("latitude"+i, markers[i].replaceAll("\\(|\\)", ""));
+				mapInfo.put("longitude"+(i+1), markers[i+1].replaceAll("\\(|\\)", ""));*/
+			}
+			/*System.out.println("al" + al);*/
+			/*list.add(al);*/
+			System.out.println("list" + list);
+			mapInfo.put("local", list);
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+			try {
+				 String str = member.getMno()+"_"+sdf.format(new java.util.Date())+".json";
+				  FileWriter file = new FileWriter(saveDir+"/"+str);
+				  file.write(mapInfo.toJSONString());
+				  file.flush();
+				  file.close();
+				  schedule.setFile_name(str);
+				 
+				 } catch (IOException e) {
+				  e.printStackTrace();
+				 }
+		}else schedule.setFile_name(null);
 		int result = mps.insertSchedule(schedule);
-		/*return selectSchedule(member, model);*/
 		return "redirect:/myPage/selectScheduleNav.do";
 
 	}
@@ -117,7 +169,7 @@ public class MyPageController {
 	@ResponseBody
   public Map<String,Object> selectSchedule(Member member, Model model,
 			@RequestParam(value = "type", required = false, defaultValue = "1") int cPage
-			) throws IOException {
+			, HttpSession session) throws IOException {
 		Map<String, Object> map = new HashMap<String, Object>();
 		System.out.println("insert 이후");
 		model.addAttribute("list", mps.selectSchedule(member.getMno()));
@@ -141,6 +193,31 @@ public class MyPageController {
 			arr.put("end", result.get("END_DATE").toString());
 			arr.put("color", result.get("SCOLOR").toString());
 			arr.put("content", result.get("SCONTENT"));
+			if(result.get("FILE_NAME")!=null) {
+				String saveDir = session.getServletContext().getRealPath("/resources/file/map");
+			
+				JSONParser parser = new JSONParser(); 
+				try { 
+					Object obj = parser.parse(new FileReader(saveDir+"/"+result.get("FILE_NAME").toString())); 
+					JSONObject jsonObject = (JSONObject) obj; 
+					/*Object name =jsonObject.get("local"); 
+					System.out.println("name ::" + name);
+				*/
+					//Object 
+					JSONArray array = (JSONArray) jsonObject.get("local"); 
+					arr.put("local", array);
+				} catch (FileNotFoundException e) { 
+					e.printStackTrace(); 
+				} catch (IOException e) { 
+					e.printStackTrace(); 
+				} catch (ParseException e) { 
+					e.printStackTrace(); 
+				}
+				
+			}else arr.put("local", "");
+			
+			/*arr.put("localJson", result.get("FILE_NAME").toString());*/
+			
 			list.add(arr);
 		}
 		AfterWeather a = new AfterWeather();
@@ -152,15 +229,10 @@ public class MyPageController {
 		
 		String times = "";
 		map.put("list", list);
-		/*try{*/
+	
 			map.put("temper",t.temperature(num));
 			map.put("weather",a.weather());
-		/*}catch(SocketTimeoutException| ConnectException|UnknownHostException e) {
-			msg="날씨 정보를 갖고오는 중 오류가 발생했습니다.";
-			map.put("msg", times);
-		}*/
-	
-		/*return "myPage/schedule";*/
+
 		return map;
 	}
 	
@@ -200,12 +272,7 @@ public class MyPageController {
 	/* 회원정보 수정 하고 myPageMain 이동 */
 	@RequestMapping("/myPage/updateMember.do")
 	public String updateMember(@RequestParam(value="profile", required = false) MultipartFile profile,Member member, @RequestParam String mpwTest, HttpSession session, HttpServletRequest request) {
-		System.out.println("이름 : " + profile);
-		System.out.println(profile.getOriginalFilename());
-		System.out.println(profile.getSize());
-		System.out.println(profile.getName());
-		System.out.println(profile.getContentType());
-		System.out.println("-----------------------");
+		
 		if(profile.getSize()==0) {
 			System.out.println("원본"+member.getProfilePath());
 		
@@ -317,20 +384,13 @@ public class MyPageController {
 		
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>(
 				mps.selectMyBoardList(cPage, numPerPage, no));
-	/*	List<Map<String, Object>> colist = new ArrayList<Map<String, Object>>(
-				mps.selectMyCommentList(cPage, numPerPage, no));
-		*/
-		/*String copageBar = Utils.getPageBar(totalCoContents, cPage, numPerPage, "myBoardList.do");*/
+	
 		String pageBar = Utils.getPageBar(totalContents, cPage, numPerPage, "myBoardList.do");
 		model.addAttribute("list", list)
 				.addAttribute("totalContents", totalContents)
 				.addAttribute("numPerPage", numPerPage)
 				.addAttribute("pageBar", pageBar)
-				.addAttribute("myType","board")
-				/*.addAttribute("colist", colist)
-				.addAttribute("totalCoContents", totalCoContents)
-				.addAttribute("copageBar", copageBar)*/
-				;
+				.addAttribute("myType","board");
 		return "myPage/boardMyView";
 	}
 	

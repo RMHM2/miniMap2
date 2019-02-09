@@ -12,6 +12,8 @@ public class Schedule {
 	private String sContent;
 	private String sColor;
 	private char delflag;
+	private String file_name;
+	
 
 	public Schedule() {
 		super();
@@ -19,7 +21,7 @@ public class Schedule {
 	}
 
 	public Schedule(int sId, int mNo, Date start_Date, Date end_Date, String sTitle, String sContent, String sColor,
-			char delflag) {
+			char delflag,String file_name) {
 		super();
 		this.sId = sId;
 		this.mNo = mNo;
@@ -29,6 +31,8 @@ public class Schedule {
 		this.sContent = sContent;
 		this.sColor = sColor;
 		this.delflag = delflag;
+		this.file_name=file_name;
+		
 	}
 
 	public Schedule(int mNo, Date start_Date, Date end_Date, String sTitle, String sContent, String sColor) {
@@ -112,11 +116,20 @@ public class Schedule {
 	public void setDelflag(char delflag) {
 		this.delflag = delflag;
 	}
+	
+
+	public String getFile_name() {
+		return file_name;
+	}
+
+	public void setFile_name(String file_name) {
+		this.file_name = file_name;
+	}
 
 	@Override
 	public String toString() {
 		return "sId=" + sId + ", mNo=" + mNo + ", start_Date=" + start_Date + ", end_Date=" + end_Date + ", sTitle="
-				+ sTitle + ", sContent=" + sContent + ", sColor=" + sColor + ", delflag=" + delflag;
+				+ sTitle + ", sContent=" + sContent + ", sColor=" + sColor + ", delflag=" + delflag+ ", file_name=" + file_name;
 	}
 
 }

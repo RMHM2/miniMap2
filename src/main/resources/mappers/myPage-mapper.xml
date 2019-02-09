@@ -38,7 +38,7 @@
 
 	<insert id="insertSchedule" parameterType="Schedule">
 		INSERT INTO SCHEDULE
-		VALUES(SEQ_SID.NEXTVAL,#{mNo},#{start_Date},#{end_Date},#{sTitle},#{sContent},#{sColor},DEFAULT)
+		VALUES(SEQ_SID.NEXTVAL,#{mNo},#{start_Date},#{end_Date},#{sTitle},#{sContent},#{sColor},DEFAULT,#{file_name})
 
 	</insert>
 	<!-- <select id="selectSchedule" parameterType="_int" resultMap="scheduleMap"> -->
