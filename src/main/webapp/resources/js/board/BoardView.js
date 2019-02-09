@@ -354,3 +354,4 @@ function markerClickListener(map, marker, infowindow) {
         infowindow.open(map, marker);
     };
 }
+
